@@ -10,16 +10,20 @@ from routes.decks import deck_bp  # your blueprint
 # Initialize Firebase Admin
 # -----------------------------
 firebase_json = os.environ.get("FIREBASE_ADMIN_JSON")
-if not firebase_json:
-    raise ValueError(
-        "FIREBASE_ADMIN_JSON environment variable is not set! "
-        "Make sure to add it in Render or your environment."
-    )
 
-cred = credentials.Certificate(json.loads(firebase_json))
-firebase_admin.initialize_app(cred)
+if firebase_json:
+    # Deployment (Render)
+    cred = credentials.Certificate(json.loads(firebase_json))
+else:
+    # Local testing: use file path
+    cred_path = r"C:\flashcardsR\flashcards-flask\flashcards-react-53345-firebase-adminsdk-fbsvc-43be6c2223.json"
+    cred = credentials.Certificate(cred_path)
 
-# Firestore client (optional, for database operations)
+# Initialize Firebase app (only once)
+if not firebase_admin._apps:
+    firebase_admin.initialize_app(cred)
+
+# Firestore client
 db = firestore.client()
 
 # -----------------------------
@@ -37,5 +41,5 @@ app.register_blueprint(deck_bp, url_prefix="/api/decks")
 # Main
 # -----------------------------
 if __name__ == "__main__":
-    # For local testing only; on Render, use gunicorn
+    # For local testing only; on Render use gunicorn
     app.run(port=5000, debug=True)
