@@ -10,7 +10,7 @@ from routes.decks import deck_bp
 
 
 app = Flask(__name__)
-CORS(app, resources={r"/api/*": {"origins": "*"}})  # allow all origins for /api/*
+CORS(app, resources={r"/api/*": {"origins":  ["https://flashcards-react-53345.web.app"]}})  # allow all origins for /api/*
  # allow cross-origin requests
 
 # Register blueprints
