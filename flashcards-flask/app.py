@@ -4,42 +4,32 @@ import firebase_admin
 from firebase_admin import credentials, firestore
 from flask import Flask
 from flask_cors import CORS
-from routes.decks import deck_bp  # your blueprint
 
 # -----------------------------
-# Initialize Firebase Admin
+# Initialize Firebase FIRST
 # -----------------------------
-firebase_json = os.environ.get("FIREBASE_ADMIN_JSON")
+firebase_json = os.environ.get("FIREBASE_SERVICE_ACCOUNT")
 
-if firebase_json:
-    # Deployment (Render)
-    cred = credentials.Certificate(json.loads(firebase_json))
-else:
-    # Local testing: use file path
-    cred_path = r"C:\flashcardsR\flashcards-flask\flashcards-react-53345-firebase-adminsdk-fbsvc-43be6c2223.json"
-    cred = credentials.Certificate(cred_path)
+if not firebase_json:
+    raise RuntimeError("FIREBASE_SERVICE_ACCOUNT env var not set")
 
-# Initialize Firebase app (only once)
-if not firebase_admin._apps:
-    firebase_admin.initialize_app(cred)
+cred = credentials.Certificate(json.loads(firebase_json))
+firebase_admin.initialize_app(cred)
 
-# Firestore client
 db = firestore.client()
 
 # -----------------------------
-# Initialize Flask App
+# Flask App
 # -----------------------------
 app = Flask(__name__)
+CORS(app)
 
-# Allow CORS only from your React frontend
-CORS(app, resources={r"/api/*": {"origins": ["https://flashcards-react-53345.web.app"]}})
-
-# Register blueprints
+# Import blueprints AFTER Firebase init
+from routes.decks import deck_bp
 app.register_blueprint(deck_bp, url_prefix="/api/decks")
 
 # -----------------------------
-# Main
+# Local run
 # -----------------------------
 if __name__ == "__main__":
-    # For local testing only; on Render use gunicorn
-    app.run(port=5000, debug=True)
+    app.run(host="0.0.0.0", port=5000)
